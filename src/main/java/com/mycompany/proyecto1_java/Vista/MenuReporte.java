@@ -5,6 +5,7 @@
 package com.mycompany.proyecto1_java.Vista;
 
 
+import com.mycompany.proyecto1_java.Controlador.ReporteControlador;
 import java.util.Scanner;
 
 public class MenuReporte {
@@ -16,7 +17,6 @@ public class MenuReporte {
         do {
             System.out.println("================================");
             System.out.println("         MENU REPORTES");
-            System.out.println("================================");
             System.out.println("1. Prestamos activos");
             System.out.println("2. Prestamos vencidos");
             System.out.println("3. Clientes morosos");
@@ -31,27 +31,27 @@ public class MenuReporte {
 
             switch (opcion) {
                 case 1:
-                    System.out.println("Prestamos activos");
+                    ReporteControlador.prestamosActivos();
                     break;
 
                 case 2:
-                    System.out.println("Prestamos vencidos");
+                    ReporteControlador.prestamosVencidos();
                     break;
 
                 case 3:
-                    System.out.println("Clientes morosos");
+                    ReporteControlador.clientesMorosos();
                     break;
 
                 case 4:
-                    System.out.println("Prestamos pagados");
+                    ReporteControlador.prestamosPagados();
                     break;
 
                 case 5:
-                    System.out.println("Total prestado");
+                    ReporteControlador.totalPrestado();
                     break;
 
                 case 6:
-                    System.out.println("Total recaudado");
+                    ReporteControlador.totalRecaudado();
                     break;
 
                 case 0:

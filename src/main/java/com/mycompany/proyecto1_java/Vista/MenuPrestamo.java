@@ -30,7 +30,6 @@ public class MenuPrestamo {
             System.out.println("7. Consultar prestamos vencidos");
             System.out.println("0. Volver");
             System.out.print("Seleccione una opcion: ");
-            System.out.println("--------------------------------");
 
             opcion = sc.nextInt();
 
@@ -44,23 +43,23 @@ public class MenuPrestamo {
                     break;
 
                 case 3:
-                    System.out.println("Buscar prestamo");
+                    PrestamoControlador.buscarPrestamo(sc);
                     break;
 
                 case 4:
-                    System.out.println("Ver detalle del prestamo");
+                    PrestamoControlador.verDetallePrestamo(sc);
                     break;
 
                 case 5:
-                    System.out.println("Cambiar estado");
+                    PrestamoControlador.cambiarEstado(sc);
                     break;
 
                 case 6:
-                    System.out.println("Consultar prestamos activos");
+                    PrestamoControlador.consultarPrestamosActivos();
                     break;
 
                 case 7:
-                    System.out.println("Consultar prestamos vencidos");
+                    PrestamoControlador.consultarPrestamosVencidos();
                     break;
 
                 case 0:

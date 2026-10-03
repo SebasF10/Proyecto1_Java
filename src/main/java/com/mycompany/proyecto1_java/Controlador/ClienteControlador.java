@@ -154,7 +154,77 @@ public class ClienteControlador {
             System.out.println(ex.getMessage());
         }
     }
+    
+    // CONSULTAR PRÉSTAMOS DEL CLIENTE
+    public static void consultarPrestamosCliente(Scanner sc) {
+
+        System.out.print("ID del cliente: ");
+        int clienteId = sc.nextInt();
+
+        try {
+
+            Operaciones.setConnection(ConexionBD.MysConnection());
+
+            String sql = "SELECT * FROM prestamos WHERE cliente_id = ?";
+
+            PreparedStatement ps =
+                    Operaciones.getConnection().prepareStatement(sql);
+
+            ps.setInt(1, clienteId);
+
+            ResultSet rs =
+                    Operaciones.consultar_BD(ps);
+
+            System.out.println("-------- PRESTAMOS DEL CLIENTE ---------");
+
+            boolean tienePrestamos = false;
+
+            while (rs.next()) {
+
+                tienePrestamos = true;
+
+                System.out.println("----------------------------");
+
+                System.out.println("ID prestamo: "
+                        + rs.getInt("id"));
+
+                System.out.println("Monto: $"
+                        + rs.getDouble("monto"));
+
+                System.out.println("Interes: "
+                        + rs.getDouble("interes") + "%");
+
+                System.out.println("Cuotas: "
+                        + rs.getInt("cuotas"));
+
+                System.out.println("Monto total: $"
+                        + rs.getDouble("monto_total"));
+
+                System.out.println("Valor cuota: $"
+                        + rs.getDouble("valor_cuota"));
+
+                System.out.println("Saldo pendiente: $"
+                        + rs.getDouble("saldo_pendiente"));
+
+                System.out.println("Fecha inicio: "
+                        + rs.getDate("fecha_inicio"));
+
+                System.out.println("Fecha vencimiento: "
+                        + rs.getDate("fecha_vencimiento"));
+
+                System.out.println("Estado: "
+                        + rs.getString("estado"));
+            }
+
+            if (!tienePrestamos) {
+                System.out.println("El cliente no tiene préstamos registrados.");
+            }
+
+        } catch (SQLException ex) {
+
+            System.out.println(ex.getMessage());
+        }
      
         
-    
+    }
 }

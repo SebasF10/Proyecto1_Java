@@ -5,6 +5,7 @@
 package com.mycompany.proyecto1_java.Vista;
 
 
+import com.mycompany.proyecto1_java.Controlador.PagoControlador;
 import java.util.Scanner;
 
 public class MenuPago {
@@ -14,9 +15,8 @@ public class MenuPago {
         int opcion;
 
         do {
-            System.out.println("================================");
+            System.out.println("---------------------------------");
             System.out.println("          MENU PAGOS");
-            System.out.println("================================");
             System.out.println("1. Registrar pago");
             System.out.println("2. Listar pagos");
             System.out.println("3. Buscar pago");
@@ -24,29 +24,28 @@ public class MenuPago {
             System.out.println("5. Consultar saldo pendiente");
             System.out.println("0. Volver");
             System.out.print("Seleccione una opcion: ");
-            System.out.println("================================");
+            System.out.println("---------------------------------");
 
             opcion = sc.nextInt();
 
             switch (opcion) {
                 case 1:
-                    System.out.println("Registrar pago");
+                    PagoControlador.registrarPago(sc);
                     break;
 
                 case 2:
-                    System.out.println("Listar pagos");
+                    PagoControlador.listarPagos();
                     break;
 
                 case 3:
-                    System.out.println("Buscar pago");
+                    PagoControlador.buscarPago(sc);
                     break;
-
                 case 4:
-                    System.out.println("Ver historial de pagos");
+                    PagoControlador.verHistorialPagos(sc);
                     break;
 
                 case 5:
-                    System.out.println("Consultar saldo pendiente");
+                    PagoControlador.consultarSaldoPendiente(sc);
                     break;
 
                 case 0:

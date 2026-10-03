@@ -39,7 +39,7 @@ public class MenuCliente {
                     break;
 
                 case 4:
-                    System.out.println("Consultar préstamos del cliente");
+                    ClienteControlador.consultarPrestamosCliente(sc);
                     break;
 
                 case 0:

@@ -160,21 +160,18 @@ public class PrestamoControlador {
         }
     }
     
-    //Buscar
-    
+    // BUSCAR 
     public static void buscarPrestamo(Scanner sc) {
 
-        System.out.print("ID del Cliente: ");
+        System.out.print("\nID del préstamo: ");
         int id = sc.nextInt();
 
         try {
 
-            Operaciones.setConnection(
-                    ConexionBD.MysConnection()
-            );
+            Operaciones.setConnection(ConexionBD.MysConnection());
 
             String sql =
-                    "SELECT * FROM clientes WHERE id = ?";
+                    "SELECT * FROM prestamos WHERE id = ?";
 
             PreparedStatement ps =
                     Operaciones.getConnection().prepareStatement(sql);
@@ -185,29 +182,261 @@ public class PrestamoControlador {
                     Operaciones.consultar_BD(ps);
 
             if (rs.next()) {
-                
-                System.out.println("--------------------------------");
-                
-                System.out.println("Empleado encontrado:");
 
-                System.out.println("ID: " +
-                        rs.getInt("id"));
+                System.out.println("--------- PRESTAMO ENCONTRADO --------");
 
-                System.out.println("Nombre: " +
-                        rs.getString("nombre"));
+                System.out.println("ID: "
+                        + rs.getInt("id"));
 
-                System.out.println("Documento: " +
-                        rs.getString("documento"));
+                System.out.println("Cliente ID: "
+                        + rs.getInt("cliente_id"));
 
-                System.out.println("Correo: " +
-                        rs.getString("correo"));
+                System.out.println("Empleado ID: "
+                        + rs.getInt("empleado_id"));
+
+                System.out.println("Monto: $"
+                        + rs.getDouble("monto"));
+
+                System.out.println("Interés: "
+                        + rs.getDouble("interes") + "%");
+
+                System.out.println("Cuotas: "
+                        + rs.getInt("cuotas"));
+
+                System.out.println("Fecha inicio: "
+                        + rs.getDate("fecha_inicio"));
+
+                System.out.println("Fecha vencimiento: "
+                        + rs.getDate("fecha_vencimiento"));
+
+                System.out.println("Monto total: $"
+                        + rs.getDouble("monto_total"));
+
+                System.out.println("Valor cuota: $"
+                        + rs.getDouble("valor_cuota"));
+
+                System.out.println("Saldo pendiente: $"
+                        + rs.getDouble("saldo_pendiente"));
+
+                System.out.println("Estado: "
+                        + rs.getString("estado"));
 
             } else {
-                System.out.println("Cliente no encontrado.");
+
+                System.out.println("Prestamo no encontrado.");
             }
 
         } catch (SQLException ex) {
             System.out.println(ex.getMessage());
         }
     }
+    
+    // VER DETALLE DEL PRESTAMO
+    public static void verDetallePrestamo(Scanner sc) {
+
+        System.out.print("ID del préstamo: ");
+        int id = sc.nextInt();
+
+        try {
+
+            Operaciones.setConnection(ConexionBD.MysConnection());
+
+            String sql =
+                    "SELECT p.*, "
+                    + "c.nombre AS nombre_cliente, "
+                    + "e.nombre AS nombre_empleado "
+                    + "FROM prestamos p "
+                    + "INNER JOIN clientes c ON p.cliente_id = c.id "
+                    + "INNER JOIN empleados e ON p.empleado_id = e.id "
+                    + "WHERE p.id = ?";
+
+            PreparedStatement ps =
+                    Operaciones.getConnection().prepareStatement(sql);
+
+            ps.setInt(1, id);
+
+            ResultSet rs =
+                    Operaciones.consultar_BD(ps);
+
+            if (rs.next()) {
+
+                System.out.println("------- DETALLE DEL PRÉSTAMO -------");
+
+                System.out.println("ID préstamo: "
+                        + rs.getInt("id"));
+
+                System.out.println("Cliente: "
+                        + rs.getString("nombre_cliente"));
+
+                System.out.println("Empleado: "
+                        + rs.getString("nombre_empleado"));
+
+                System.out.println("Monto: $"
+                        + rs.getDouble("monto"));
+
+                System.out.println("Interés: "
+                        + rs.getDouble("interes") + "%");
+
+                System.out.println("Número de cuotas: "
+                        + rs.getInt("cuotas"));
+
+                System.out.println("Monto total: $"
+                        + rs.getDouble("monto_total"));
+
+                System.out.println("Valor de cuota: $"
+                        + rs.getDouble("valor_cuota"));
+
+                System.out.println("Saldo pendiente: $"
+                        + rs.getDouble("saldo_pendiente"));
+
+                System.out.println("Fecha inicio: "
+                        + rs.getDate("fecha_inicio"));
+
+                System.out.println("Fecha vencimiento: "
+                        + rs.getDate("fecha_vencimiento"));
+
+                System.out.println("Estado: "
+                        + rs.getString("estado"));
+
+            } else {
+
+                System.out.println("Prestamo no encontrado.");
+            }
+
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+    
+    // CAMBIAR ESTADO
+    public static void cambiarEstado(Scanner sc) {
+
+        System.out.print("ID del préstamo: ");
+        int id = sc.nextInt();
+
+        sc.nextLine();
+
+        System.out.print("Nuevo estado: ");
+        String estado = sc.nextLine();
+
+        try {
+
+            Operaciones.setConnection(ConexionBD.MysConnection());
+
+            String sql =
+                    "UPDATE prestamos SET estado = ? WHERE id = ?";
+
+            PreparedStatement ps =
+                    Operaciones.getConnection().prepareStatement(sql);
+
+            ps.setString(1, estado);
+            ps.setInt(2, id);
+
+            int filas =
+                    Operaciones.insertar_actualizar_borrar_BD(ps);
+
+            if (filas > 0) {
+                System.out.println("Estado actualizado.");
+            } else {
+                System.out.println("No se encontró el préstamo.");
+            }
+
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
+
+    // PRÉSTAMOS ACTIVOS
+    public static void consultarPrestamosActivos() {
+
+        try {
+
+            Operaciones.setConnection(ConexionBD.MysConnection());
+
+            String sql =
+                    "SELECT * FROM prestamos WHERE estado = 'ACTIVO'";
+
+            PreparedStatement ps =
+                    Operaciones.getConnection().prepareStatement(sql);
+
+            ResultSet rs =
+                    Operaciones.consultar_BD(ps);
+
+            System.out.println("--------- PRÉSTAMOS ACTIVOS ---------");
+
+            while (rs.next()) {
+
+                System.out.println("----------------------------");
+
+                System.out.println("ID: "
+                        + rs.getInt("id"));
+
+                System.out.println("Cliente ID: "
+                        + rs.getInt("cliente_id"));
+
+                System.out.println("Monto total: $"
+                        + rs.getDouble("monto_total"));
+
+                System.out.println("Saldo pendiente: $"
+                        + rs.getDouble("saldo_pendiente"));
+
+                System.out.println("Estado: "
+                        + rs.getString("estado"));
+            }
+
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
+
+    // PRÉSTAMOS VENCIDOS
+    public static void consultarPrestamosVencidos() {
+
+        try {
+
+            Operaciones.setConnection(ConexionBD.MysConnection());
+
+            String sql =
+                    "SELECT * FROM prestamos "
+                    + "WHERE fecha_vencimiento < CURDATE() "
+                    + "AND saldo_pendiente > 0";
+
+            PreparedStatement ps =
+                    Operaciones.getConnection().prepareStatement(sql);
+
+            ResultSet rs =
+                    Operaciones.consultar_BD(ps);
+
+            System.out.println("------- PRÉSTAMOS VENCIDOS ---------");
+
+            while (rs.next()) {
+
+                System.out.println("----------------------------");
+
+                System.out.println("ID: "
+                        + rs.getInt("id"));
+
+                System.out.println("Cliente ID: "
+                        + rs.getInt("cliente_id"));
+
+                System.out.println("Monto total: $"
+                        + rs.getDouble("monto_total"));
+
+                System.out.println("Saldo pendiente: $"
+                        + rs.getDouble("saldo_pendiente"));
+
+                System.out.println("Fecha vencimiento: "
+                        + rs.getDate("fecha_vencimiento"));
+
+                System.out.println("Estado: "
+                        + rs.getString("estado"));
+            }
+
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+    
 }
