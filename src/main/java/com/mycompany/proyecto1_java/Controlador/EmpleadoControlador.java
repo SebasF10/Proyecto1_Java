@@ -19,22 +19,40 @@ public class EmpleadoControlador {
 
         sc.nextLine();
 
-        System.out.println("===== REGISTRAR EMPLEADO =====");
+        System.out.println("------ REGISTRAR EMPLEADO -------");
 
         System.out.print("Nombre: ");
-        String nombre = sc.nextLine();
+        String nombre = sc.nextLine().trim();
 
         System.out.print("Documento: ");
-        String documento = sc.nextLine();
+        String documento = sc.nextLine().trim();
 
         System.out.print("Rol: ");
-        String rol = sc.nextLine();
+        String rol = sc.nextLine().trim();
 
         System.out.print("Correo: ");
-        String correo = sc.nextLine();
+        String correo = sc.nextLine().trim();
 
         System.out.print("Salario: ");
+        if (!sc.hasNextDouble()) {
+            System.out.println("El salario debe ser un numero.");
+            sc.next();
+            return;
+        }
         double salario = sc.nextDouble();
+
+        if (nombre.isBlank() || documento.isBlank() || rol.isBlank()) {
+            System.out.println("Nombre, documento y rol son obligatorios.");
+            return;
+        }
+        if (!correo.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            System.out.println("El correo no tiene un formato valido.");
+            return;
+        }
+        if (!Double.isFinite(salario) || salario < 0) {
+            System.out.println("El salario debe ser un numero valido y no negativo.");
+            return;
+        }
 
         try {
 
@@ -108,7 +126,16 @@ public class EmpleadoControlador {
     public static void buscarEmpleado(Scanner sc) {
 
         System.out.print("ID del empleado: ");
+        if (!sc.hasNextInt()) {
+            System.out.println("El ID debe ser un numero.");
+            sc.next();
+            return;
+        }
         int id = sc.nextInt();
+        if (id <= 0) {
+            System.out.println("El ID debe ser un numero positivo.");
+            return;
+        }
 
         try {
 

@@ -12,7 +12,7 @@ public class MenuPago {
 
     public static void mostrar(Scanner sc) {
 
-        int opcion;
+        int opcion = -1;
 
         do {
             System.out.println("---------------------------------");
@@ -26,6 +26,11 @@ public class MenuPago {
             System.out.print("Seleccione una opcion: ");
             System.out.println("---------------------------------");
 
+            if (!sc.hasNextInt()) {
+                System.out.println("Ingrese un numero de opcion valido.");
+                sc.next();
+                continue;
+            }
             opcion = sc.nextInt();
 
             switch (opcion) {
@@ -49,11 +54,11 @@ public class MenuPago {
                     break;
 
                 case 0:
-                    System.out.println("Volviendo al menú principal...");
+                    System.out.println("Volviendo al menu principal...");
                     break;
 
                 default:
-                    System.out.println("Opcion no válida.");
+                    System.out.println("Opcion no valida.");
             }
 
         } while (opcion != 0);

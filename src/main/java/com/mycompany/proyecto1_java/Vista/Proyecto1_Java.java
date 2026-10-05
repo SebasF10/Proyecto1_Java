@@ -4,6 +4,7 @@
 
 package com.mycompany.proyecto1_java.Vista;
 
+import com.mycompany.proyecto1_java.Controlador.ArchivosControlador;
 import java.util.Scanner;
 
 public class Proyecto1_Java {
@@ -11,7 +12,7 @@ public class Proyecto1_Java {
     public static void main(String[] args) {
 
         Scanner sc = new Scanner(System.in);
-        int opcion;
+        int opcion = -1;
 
         do {
             System.out.println("================================");
@@ -20,9 +21,15 @@ public class Proyecto1_Java {
             System.out.println("3. Prestamos");
             System.out.println("4. Pagos");
             System.out.println("5. Reportes");
+            System.out.println("6 Archivos TXT");
             System.out.println("0. Salir");
             System.out.print("Seleccione una opcion: ");
 
+            if (!sc.hasNextInt()) {
+                System.out.println("Ingrese un numero de opcion valido.");
+                sc.next();
+                continue;
+            }
             opcion = sc.nextInt();
 
             switch (opcion) {
@@ -45,13 +52,17 @@ public class Proyecto1_Java {
                 case 5:
                     MenuReporte.mostrar(sc);
                     break;
-
+                
+                case 6:
+                    ArchivosControlador.generarArchivos();
+                    break;
+                    
                 case 0:
                     System.out.println("Gracias por utilizar CrediYa.");
                     break;
 
                 default:
-                    System.out.println("Opcion no válida.");
+                    System.out.println("Opcion no valida.");
             }
 
         } while (opcion != 0);

@@ -27,16 +27,25 @@ public class ClienteControlador {
         System.out.println("===== REGISTRAR CLIENTE  =====");
         
         System.out.print("Nombre: ");
-        String nombre = sc.nextLine();
+        String nombre = sc.nextLine().trim();
         
         System.out.print("Documento: ");
-        String documento = sc.nextLine();
+        String documento = sc.nextLine().trim();
         
         System.out.print("Correo: ");
-        String correo = sc.nextLine();
+        String correo = sc.nextLine().trim();
         
         System.out.print("Telefono: ");
-        String telefono = sc.nextLine();
+        String telefono = sc.nextLine().trim();
+
+        if (nombre.isBlank() || documento.isBlank() || telefono.isBlank()) {
+            System.out.println("Nombre, documento y telefono son obligatorios.");
+            return;
+        }
+        if (!correo.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            System.out.println("El correo no tiene un formato valido.");
+            return;
+        }
         
         try {
 
@@ -109,7 +118,16 @@ public class ClienteControlador {
     public static void buscarClientes(Scanner sc) {
 
         System.out.print("ID del Cliente: ");
+        if (!sc.hasNextInt()) {
+            System.out.println("El ID debe ser un numero.");
+            sc.next();
+            return;
+        }
         int id = sc.nextInt();
+        if (id <= 0) {
+            System.out.println("El ID debe ser un numero positivo.");
+            return;
+        }
 
         try {
 
@@ -155,15 +173,25 @@ public class ClienteControlador {
         }
     }
     
-    // CONSULTAR PRÉSTAMOS DEL CLIENTE
+    // CONSULTAR PRESTAMOS DEL CLIENTE
     public static void consultarPrestamosCliente(Scanner sc) {
 
         System.out.print("ID del cliente: ");
+        if (!sc.hasNextInt()) {
+            System.out.println("El ID debe ser un numero.");
+            sc.next();
+            return;
+        }
         int clienteId = sc.nextInt();
+        if (clienteId <= 0) {
+            System.out.println("El ID debe ser un numero positivo.");
+            return;
+        }
 
         try {
 
             Operaciones.setConnection(ConexionBD.MysConnection());
+            PrestamoControlador.sincronizarPrestamosVencidos();
 
             String sql = "SELECT * FROM prestamos WHERE cliente_id = ?";
 
@@ -217,7 +245,7 @@ public class ClienteControlador {
             }
 
             if (!tienePrestamos) {
-                System.out.println("El cliente no tiene préstamos registrados.");
+                System.out.println("El cliente no tiene prestamos registrados.");
             }
 
         } catch (SQLException ex) {

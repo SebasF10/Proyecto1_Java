@@ -11,47 +11,112 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.Locale;
 import java.util.Scanner;
 
 public class PrestamoControlador {
 
-    // CREAR PRÉSTAMO
+    // CREAR PRESTAMO
     public static void crearPrestamo(Scanner sc) {
 
         sc.nextLine();
 
-        System.out.println("-------- CREAR PRÉSTAMO --------");
+        System.out.println("-------- CREAR PRESTAMO --------");
 
         System.out.print("ID del cliente: ");
+        if (!sc.hasNextInt()) {
+            System.out.println("El ID del cliente debe ser un numero.");
+            sc.next();
+            return;
+        }
         int clienteId = sc.nextInt();
+        if (clienteId <= 0) {
+            System.out.println("El ID del cliente debe ser positivo.");
+            return;
+        }
 
         System.out.print("ID del empleado: ");
+        if (!sc.hasNextInt()) {
+            System.out.println("El ID del empleado debe ser un numero.");
+            sc.next();
+            return;
+        }
         int empleadoId = sc.nextInt();
+        if (empleadoId <= 0) {
+            System.out.println("El ID del empleado debe ser positivo.");
+            return;
+        }
 
-        System.out.print("Monto del préstamo: ");
+        System.out.print("Monto del prestamo: ");
+        if (!sc.hasNextDouble()) {
+            System.out.println("El monto debe ser un numero.");
+            sc.next();
+            return;
+        }
         double monto = sc.nextDouble();
+        if (!Double.isFinite(monto) || monto <= 0) {
+            System.out.println("El monto debe ser un numero valido mayor que 0.");
+            return;
+        }
 
-        System.out.print("Interés (%): ");
+        System.out.print("Interes (%): ");
+        if (!sc.hasNextDouble()) {
+            System.out.println("El interes debe ser un numero.");
+            sc.next();
+            return;
+        }
         double interes = sc.nextDouble();
+        if (!Double.isFinite(interes) || interes < 0) {
+            System.out.println("El interes debe ser un numero valido y no negativo.");
+            return;
+        }
 
-        System.out.print("Número de cuotas: ");
+        System.out.print("Numero de cuotas: ");
+        if (!sc.hasNextInt()) {
+            System.out.println("El numero de cuotas debe ser un numero entero.");
+            sc.next();
+            return;
+        }
         int cuotas = sc.nextInt();
+        if (cuotas <= 0) {
+            System.out.println("El numero de cuotas debe ser mayor que 0.");
+            return;
+        }
 
         sc.nextLine();
 
-        System.out.print("Fecha de inicio (AAAA-MM-DD): ");
-        LocalDate fechaInicio = LocalDate.parse(sc.nextLine());
+        LocalDate fechaInicio;
+        LocalDate fechaVencimiento;
+        try {
+            System.out.print("Fecha de inicio (AAAA-MM-DD): ");
+            fechaInicio = LocalDate.parse(sc.nextLine().trim());
 
-        System.out.print("Fecha de vencimiento (AAAA-MM-DD): ");
-        LocalDate fechaVencimiento = LocalDate.parse(sc.nextLine());
+            System.out.print("Fecha de vencimiento (AAAA-MM-DD): ");
+            fechaVencimiento = LocalDate.parse(sc.nextLine().trim());
+        } catch (DateTimeParseException ex) {
+            System.out.println("La fecha no es valida. Use el formato AAAA-MM-DD.");
+            return;
+        }
+        if (fechaInicio.isBefore(LocalDate.now())) {
+            System.out.println("La fecha de inicio no puede estar en el pasado.");
+            return;
+        }
+        if (!fechaVencimiento.isAfter(fechaInicio)) {
+            System.out.println("La fecha de vencimiento debe ser posterior al inicio.");
+            return;
+        }
 
-        // Cálculo del préstamo
+        // Calculo del prestamo
         
         double montoInteres = monto * interes / 100;
         double montoTotal = monto + montoInteres;
         double valorCuota = montoTotal / cuotas;
         double saldoPendiente = montoTotal;
-
+        if (!Double.isFinite(montoTotal) || !Double.isFinite(valorCuota)) {
+            System.out.println("El monto o el interes son demasiado grandes.");
+            return;
+        }
         String estado = "PENDIENTE";
 
         try {
@@ -83,13 +148,13 @@ public class PrestamoControlador {
                     Operaciones.insertar_actualizar_borrar_BD(ps);
 
             if (filas > 0) {
-                System.out.println("Préstamo creado correctamente.");
+                System.out.println("Prestamo creado correctamente.");
                 System.out.println("Monto total: $" + montoTotal);
                 System.out.println("Valor de cada cuota: $" + valorCuota);
                 System.out.println("Saldo pendiente: $" + saldoPendiente);
                 System.out.println("Estado: " + estado);
             } else {
-                System.out.println("No se pudo crear el préstamo.");
+                System.out.println("No se pudo crear el prestamo.");
             }
 
         } catch (SQLException ex) {
@@ -97,12 +162,13 @@ public class PrestamoControlador {
         }
     }
     
-    // LISTAR PRÉSTAMOS
+    // LISTAR PRESTAMOS
     public static void listarPrestamos() {
 
         try {
 
             Operaciones.setConnection(ConexionBD.MysConnection());
+            sincronizarPrestamosVencidos();
 
             String sql = "SELECT * FROM prestamos";
 
@@ -112,7 +178,7 @@ public class PrestamoControlador {
             ResultSet rs =
                     Operaciones.consultar_BD(ps);
 
-            System.out.println("--------- PRÉSTAMOS ----------");
+            System.out.println("--------- PRESTAMOS ----------");
 
             while (rs.next()) {
 
@@ -130,7 +196,7 @@ public class PrestamoControlador {
                 System.out.println("Monto: $"
                         + rs.getDouble("monto"));
 
-                System.out.println("Interés: "
+                System.out.println("Interes: "
                         + rs.getDouble("interes") + "%");
 
                 System.out.println("Cuotas: "
@@ -163,12 +229,22 @@ public class PrestamoControlador {
     // BUSCAR 
     public static void buscarPrestamo(Scanner sc) {
 
-        System.out.print("\nID del préstamo: ");
+        System.out.print("\nID del prestamo: ");
+        if (!sc.hasNextInt()) {
+            System.out.println("El ID debe ser un numero.");
+            sc.next();
+            return;
+        }
         int id = sc.nextInt();
+        if (id <= 0) {
+            System.out.println("El ID debe ser un numero positivo.");
+            return;
+        }
 
         try {
 
             Operaciones.setConnection(ConexionBD.MysConnection());
+            sincronizarPrestamosVencidos();
 
             String sql =
                     "SELECT * FROM prestamos WHERE id = ?";
@@ -197,7 +273,7 @@ public class PrestamoControlador {
                 System.out.println("Monto: $"
                         + rs.getDouble("monto"));
 
-                System.out.println("Interés: "
+                System.out.println("Interes: "
                         + rs.getDouble("interes") + "%");
 
                 System.out.println("Cuotas: "
@@ -234,12 +310,22 @@ public class PrestamoControlador {
     // VER DETALLE DEL PRESTAMO
     public static void verDetallePrestamo(Scanner sc) {
 
-        System.out.print("ID del préstamo: ");
+        System.out.print("ID del prestamo: ");
+        if (!sc.hasNextInt()) {
+            System.out.println("El ID debe ser un numero.");
+            sc.next();
+            return;
+        }
         int id = sc.nextInt();
+        if (id <= 0) {
+            System.out.println("El ID debe ser un numero positivo.");
+            return;
+        }
 
         try {
 
             Operaciones.setConnection(ConexionBD.MysConnection());
+            sincronizarPrestamosVencidos();
 
             String sql =
                     "SELECT p.*, "
@@ -260,9 +346,9 @@ public class PrestamoControlador {
 
             if (rs.next()) {
 
-                System.out.println("------- DETALLE DEL PRÉSTAMO -------");
+                System.out.println("------- DETALLE DEL PRESTAMO -------");
 
-                System.out.println("ID préstamo: "
+                System.out.println("ID prestamo: "
                         + rs.getInt("id"));
 
                 System.out.println("Cliente: "
@@ -274,10 +360,10 @@ public class PrestamoControlador {
                 System.out.println("Monto: $"
                         + rs.getDouble("monto"));
 
-                System.out.println("Interés: "
+                System.out.println("Interes: "
                         + rs.getDouble("interes") + "%");
 
-                System.out.println("Número de cuotas: "
+                System.out.println("Numero de cuotas: "
                         + rs.getInt("cuotas"));
 
                 System.out.println("Monto total: $"
@@ -311,17 +397,71 @@ public class PrestamoControlador {
     // CAMBIAR ESTADO
     public static void cambiarEstado(Scanner sc) {
 
-        System.out.print("ID del préstamo: ");
+        System.out.print("ID del prestamo: ");
+        if (!sc.hasNextInt()) {
+            System.out.println("El ID debe ser un numero.");
+            sc.next();
+            return;
+        }
         int id = sc.nextInt();
+        if (id <= 0) {
+            System.out.println("El ID debe ser un numero positivo.");
+            return;
+        }
 
         sc.nextLine();
 
-        System.out.print("Nuevo estado: ");
-        String estado = sc.nextLine();
+        System.out.print("Nuevo estado (PENDIENTE, ACTIVO, VENCIDO, PAGADO): ");
+        String estado = sc.nextLine().trim().toUpperCase(Locale.ROOT);
+        if (!estado.equals("PENDIENTE") && !estado.equals("ACTIVO")
+                && !estado.equals("VENCIDO") && !estado.equals("PAGADO")) {
+            System.out.println("Estado no valido.");
+            return;
+        }
 
         try {
 
             Operaciones.setConnection(ConexionBD.MysConnection());
+            sincronizarPrestamosVencidos();
+
+            if ("PAGADO".equals(estado)) {
+                String sqlSaldo = "SELECT saldo_pendiente FROM prestamos WHERE id = ?";
+                PreparedStatement psSaldo =
+                        Operaciones.getConnection().prepareStatement(sqlSaldo);
+                psSaldo.setInt(1, id);
+                ResultSet rsSaldo = Operaciones.consultar_BD(psSaldo);
+                if (!rsSaldo.next()) {
+                    System.out.println("No se encontro el prestamo.");
+                    return;
+                }
+                if (rsSaldo.getDouble("saldo_pendiente") > 0) {
+                    System.out.println("No se puede marcar como pagado si tiene saldo pendiente.");
+                    return;
+                }
+            }
+            if ("VENCIDO".equals(estado)) {
+                String sqlVencimiento =
+                        "SELECT fecha_vencimiento, saldo_pendiente "
+                        + "FROM prestamos WHERE id = ?";
+                PreparedStatement psVencimiento =
+                        Operaciones.getConnection()
+                                .prepareStatement(sqlVencimiento);
+                psVencimiento.setInt(1, id);
+                ResultSet rsVencimiento =
+                        Operaciones.consultar_BD(psVencimiento);
+                if (!rsVencimiento.next()) {
+                    System.out.println("No se encontro el prestamo.");
+                    return;
+                }
+                java.sql.Date fechaVencimiento =
+                        rsVencimiento.getDate("fecha_vencimiento");
+                if (fechaVencimiento == null
+                        || !fechaVencimiento.toLocalDate().isBefore(LocalDate.now())
+                        || rsVencimiento.getDouble("saldo_pendiente") <= 0) {
+                    System.out.println("Solo puede marcarse como vencido si ya paso la fecha y tiene saldo pendiente.");
+                    return;
+                }
+            }
 
             String sql =
                     "UPDATE prestamos SET estado = ? WHERE id = ?";
@@ -336,9 +476,10 @@ public class PrestamoControlador {
                     Operaciones.insertar_actualizar_borrar_BD(ps);
 
             if (filas > 0) {
+                sincronizarPrestamosVencidos();
                 System.out.println("Estado actualizado.");
             } else {
-                System.out.println("No se encontró el préstamo.");
+                System.out.println("No se encontro el prestamo.");
             }
 
         } catch (SQLException ex) {
@@ -347,12 +488,13 @@ public class PrestamoControlador {
     }
 
 
-    // PRÉSTAMOS ACTIVOS
+    // PRESTAMOS ACTIVOS
     public static void consultarPrestamosActivos() {
 
         try {
 
             Operaciones.setConnection(ConexionBD.MysConnection());
+            sincronizarPrestamosVencidos();
 
             String sql =
                     "SELECT * FROM prestamos WHERE estado = 'ACTIVO'";
@@ -363,7 +505,7 @@ public class PrestamoControlador {
             ResultSet rs =
                     Operaciones.consultar_BD(ps);
 
-            System.out.println("--------- PRÉSTAMOS ACTIVOS ---------");
+            System.out.println("--------- PRESTAMOS ACTIVOS ---------");
 
             while (rs.next()) {
 
@@ -391,12 +533,13 @@ public class PrestamoControlador {
     }
 
 
-    // PRÉSTAMOS VENCIDOS
+    // PRESTAMOS VENCIDOS
     public static void consultarPrestamosVencidos() {
 
         try {
 
             Operaciones.setConnection(ConexionBD.MysConnection());
+            sincronizarPrestamosVencidos();
 
             String sql =
                     "SELECT * FROM prestamos "
@@ -409,7 +552,7 @@ public class PrestamoControlador {
             ResultSet rs =
                     Operaciones.consultar_BD(ps);
 
-            System.out.println("------- PRÉSTAMOS VENCIDOS ---------");
+            System.out.println("------- PRESTAMOS VENCIDOS ---------");
 
             while (rs.next()) {
 
@@ -436,6 +579,17 @@ public class PrestamoControlador {
 
         } catch (SQLException ex) {
             System.out.println(ex.getMessage());
+        }
+    }
+
+    static void sincronizarPrestamosVencidos() throws SQLException {
+        String sql = "UPDATE prestamos SET estado = 'VENCIDO' "
+                + "WHERE fecha_vencimiento < CURDATE() "
+                + "AND saldo_pendiente > 0 "
+                + "AND (estado IS NULL OR estado <> 'PAGADO')";
+        try (PreparedStatement ps =
+                     Operaciones.getConnection().prepareStatement(sql)) {
+            ps.executeUpdate();
         }
     }
     

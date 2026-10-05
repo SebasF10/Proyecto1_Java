@@ -23,18 +23,27 @@ public class PagoControlador {
         System.out.println("------- REGISTRAR PAGO -------- ");
 
         System.out.print("ID del prestamo: ");
+        if (!sc.hasNextInt()) {
+            System.out.println("El ID debe ser un numero.");
+            sc.next();
+            return;
+        }
         int prestamoId = sc.nextInt();
-
-        System.out.print("Monto del pago: ");
-        double montoPago = sc.nextDouble();
+        if (prestamoId <= 0) {
+            System.out.println("El ID del prestamo debe ser positivo.");
+            return;
+        }
 
         try {
 
             Operaciones.setConnection(ConexionBD.MysConnection());
+            PrestamoControlador.sincronizarPrestamosVencidos();
 
-            // Buscar saldo actual del préstamo
+            // Consultar los datos del prestamo antes de solicitar el pago
             String sqlConsulta =
-                    "SELECT saldo_pendiente FROM prestamos WHERE id = ?";
+                    "SELECT monto, monto_total, cuotas, valor_cuota, "
+                    + "saldo_pendiente, fecha_vencimiento, estado "
+                    + "FROM prestamos WHERE id = ?";
 
             PreparedStatement psConsulta =
                     Operaciones.getConnection()
@@ -50,16 +59,45 @@ public class PagoControlador {
                 return;
             }
 
+            double montoOriginal = rs.getDouble("monto");
+            double montoTotal = rs.getDouble("monto_total");
+            int cuotas = rs.getInt("cuotas");
+            double valorCuota = rs.getDouble("valor_cuota");
             double saldoActual =
                     rs.getDouble("saldo_pendiente");
+            if (saldoActual <= 0 || "PAGADO".equalsIgnoreCase(rs.getString("estado"))) {
+                System.out.println("El prestamo ya esta pagado.");
+                return;
+            }
 
-            // Verificar que el pago no sea mayor al saldo
-            if (montoPago <= 0) {
+            java.sql.Date fechaVencimiento = rs.getDate("fecha_vencimiento");
+            System.out.println("------ DATOS DEL PRESTAMO ------");
+            System.out.println("Monto prestado: $" + montoOriginal);
+            System.out.println("Monto total con intereses: $" + montoTotal);
+            System.out.println("Cuotas acordadas: " + cuotas);
+            System.out.println("Valor de cada cuota: $" + valorCuota);
+            System.out.println("Saldo pendiente: $" + saldoActual);
+            System.out.println("Fecha limite de pago: "
+                    + (fechaVencimiento == null ? "No registrada" : fechaVencimiento));
+            if (fechaVencimiento != null
+                    && fechaVencimiento.toLocalDate().isBefore(java.time.LocalDate.now())) {
+                System.out.println("AVISO: El prestamo esta vencido.");
+            }
+
+            System.out.print("Monto del pago: ");
+            if (!sc.hasNextDouble()) {
+                System.out.println("El monto debe ser un numero.");
+                sc.next();
+                return;
+            }
+            double montoPago = sc.nextDouble();
+            if (!Double.isFinite(montoPago) || montoPago <= 0) {
                 System.out.println("El monto del pago debe ser mayor que 0.");
                 return;
             }
 
-            if (montoPago > saldoActual) {
+            // Verificar que el pago no sea mayor al saldo
+            if (montoPago - saldoActual > 0.000001) {
                 System.out.println("El pago no puede ser mayor al saldo pendiente.");
                 return;
             }
@@ -84,7 +122,10 @@ public class PagoControlador {
 
                 // Calcular nuevo saldo
                 double nuevoSaldo =
-                        saldoActual - montoPago;
+                        Math.max(0, saldoActual - montoPago);
+                if (nuevoSaldo < 0.005) {
+                    nuevoSaldo = 0;
+                }
 
                 // Actualizar saldo
                 String sqlActualizar =
@@ -104,7 +145,7 @@ public class PagoControlador {
                 );
 
                 // Si el saldo llega a 0, marcar como pagado
-                if (nuevoSaldo == 0) {
+                if (nuevoSaldo < 0.005) {
 
                     String sqlEstado =
                             "UPDATE prestamos "
@@ -188,7 +229,16 @@ public class PagoControlador {
     public static void buscarPago(Scanner sc) {
 
         System.out.print("ID del pago: ");
+        if (!sc.hasNextInt()) {
+            System.out.println("El ID debe ser un numero.");
+            sc.next();
+            return;
+        }
         int id = sc.nextInt();
+        if (id <= 0) {
+            System.out.println("El ID debe ser un numero positivo.");
+            return;
+        }
 
         try {
 
@@ -237,8 +287,17 @@ public class PagoControlador {
     // HISTORIAL DE PAGOS
     public static void verHistorialPagos(Scanner sc) {
 
-        System.out.print("ID del préstamo: ");
+        System.out.print("ID del prestamo: ");
+        if (!sc.hasNextInt()) {
+            System.out.println("El ID debe ser un numero.");
+            sc.next();
+            return;
+        }
         int prestamoId = sc.nextInt();
+        if (prestamoId <= 0) {
+            System.out.println("El ID del prestamo debe ser positivo.");
+            return;
+        }
 
         try {
 
@@ -292,12 +351,22 @@ public class PagoControlador {
     // CONSULTAR SALDO PENDIENTE
     public static void consultarSaldoPendiente(Scanner sc) {
 
-        System.out.print("ID del préstamo: ");
+        System.out.print("ID del prestamo: ");
+        if (!sc.hasNextInt()) {
+            System.out.println("El ID debe ser un numero.");
+            sc.next();
+            return;
+        }
         int prestamoId = sc.nextInt();
+        if (prestamoId <= 0) {
+            System.out.println("El ID del prestamo debe ser positivo.");
+            return;
+        }
 
         try {
 
             Operaciones.setConnection(ConexionBD.MysConnection());
+            PrestamoControlador.sincronizarPrestamosVencidos();
 
             String sql =
                     "SELECT saldo_pendiente, estado "

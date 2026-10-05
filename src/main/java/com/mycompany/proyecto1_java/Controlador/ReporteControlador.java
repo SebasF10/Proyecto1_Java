@@ -16,12 +16,13 @@ import java.util.List;
 
 public class ReporteControlador {
 
-    // PRÉSTAMOS ACTIVOS
+    // PRESTAMOS ACTIVOS
     public static void prestamosActivos() {
 
         try {
 
             Operaciones.setConnection(ConexionBD.MysConnection());
+            PrestamoControlador.sincronizarPrestamosVencidos();
 
             String sql = "SELECT * FROM prestamos WHERE estado = 'ACTIVO'";
 
@@ -41,7 +42,7 @@ public class ReporteControlador {
             System.out.println("------ PRESTAMOS ACTIVOS -------");
 
             if (prestamos.isEmpty()) {
-                System.out.println("No hay préstamos activos.");
+                System.out.println("No hay prestamos activos.");
             } else {
 
                 prestamos.stream()
@@ -57,12 +58,13 @@ public class ReporteControlador {
     }
 
 
-    // PRÉSTAMOS VENCIDOS
+    // PRESTAMOS VENCIDOS
     public static void prestamosVencidos() {
 
         try {
 
             Operaciones.setConnection(ConexionBD.MysConnection());
+            PrestamoControlador.sincronizarPrestamosVencidos();
 
             String sql =
                     "SELECT * FROM prestamos "
@@ -116,6 +118,7 @@ public class ReporteControlador {
         try {
 
             Operaciones.setConnection(ConexionBD.MysConnection());
+            PrestamoControlador.sincronizarPrestamosVencidos();
 
             String sql =
                     "SELECT c.id, c.nombre, c.documento, "
@@ -171,7 +174,7 @@ public class ReporteControlador {
     }
 
 
-    // PRÉSTAMOS PAGADOS
+    // PRESTAMOS PAGADOS
     public static void prestamosPagados() {
 
         try {

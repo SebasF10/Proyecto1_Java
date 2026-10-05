@@ -11,18 +11,23 @@ public class MenuEmpleado {
 
     public static void mostrar(Scanner sc) {
 
-        int opcion;
+        int opcion = -1;
 
         do {
 
             System.out.println("================================");
-            System.out.println("        MENÚ EMPLEADOS");
+            System.out.println("        MENU EMPLEADOS");
             System.out.println("1. Registrar empleado");
             System.out.println("2. Listar empleados");
             System.out.println("3. Buscar empleado");
             System.out.println("0. Volver");
             System.out.print("Seleccione: ");
 
+            if (!sc.hasNextInt()) {
+                System.out.println("Ingrese un numero de opcion valido.");
+                sc.next();
+                continue;
+            }
             opcion = sc.nextInt();
 
             switch (opcion) {
@@ -44,7 +49,7 @@ public class MenuEmpleado {
                     break;
 
                 default:
-                    System.out.println("Opción inválida.");
+                    System.out.println("Opcion invalida.");
             }
 
         } while (opcion != 0);

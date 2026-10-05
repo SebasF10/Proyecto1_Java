@@ -16,7 +16,7 @@ public class MenuPrestamo {
 
     public static void mostrar(Scanner sc) {
 
-        int opcion;
+        int opcion = -1;
 
         do {
             System.out.println("--------------------------------");
@@ -31,6 +31,11 @@ public class MenuPrestamo {
             System.out.println("0. Volver");
             System.out.print("Seleccione una opcion: ");
 
+            if (!sc.hasNextInt()) {
+                System.out.println("Ingrese un numero de opcion valido.");
+                sc.next();
+                continue;
+            }
             opcion = sc.nextInt();
 
             switch (opcion) {
@@ -67,7 +72,7 @@ public class MenuPrestamo {
                     break;
 
                 default:
-                    System.out.println("Opcion no válida.");
+                    System.out.println("Opcion no valida.");
             }
 
         } while (opcion != 0);

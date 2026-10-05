@@ -12,10 +12,10 @@ public class MenuReporte {
 
     public static void mostrar(Scanner sc) {
 
-        int opcion;
+        int opcion = -1;
 
         do {
-            System.out.println("================================");
+            System.out.println("---------------------------------");
             System.out.println("         MENU REPORTES");
             System.out.println("1. Prestamos activos");
             System.out.println("2. Prestamos vencidos");
@@ -25,8 +25,13 @@ public class MenuReporte {
             System.out.println("6. Total recaudado");
             System.out.println("0. Volver");
             System.out.print("Seleccione una opcion: ");
-            System.out.println("================================");
+            System.out.println("---------------------------------");
 
+            if (!sc.hasNextInt()) {
+                System.out.println("Ingrese un numero de opcion valido.");
+                sc.next();
+                continue;
+            }
             opcion = sc.nextInt();
 
             switch (opcion) {
@@ -59,7 +64,7 @@ public class MenuReporte {
                     break;
 
                 default:
-                    System.out.println("Opcion no válida.");
+                    System.out.println("Opcion no valida.");
             }
 
         } while (opcion != 0);
