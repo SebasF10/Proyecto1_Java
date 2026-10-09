@@ -7,3 +7,10 @@ Rol: junior
 Correo: sebas@gmail.com
 Salario: $222222.0
 ----------------------------
+ID: 2
+Nombre: juan jose
+Documento: 8883833
+Rol: ayudante
+Correo: juan@gmail.com
+Salario: $2.0
+----------------------------

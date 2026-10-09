@@ -53,29 +53,46 @@ public class ClienteControlador {
                     ConexionBD.MysConnection()
             );
 
+            String validarSql =
+                    "SELECT 1 FROM clientes WHERE documento = ? LIMIT 1";
+
+            try (PreparedStatement validar =
+                         Operaciones.getConnection().prepareStatement(validarSql)) {
+                validar.setString(1, documento);
+                try (ResultSet rs = validar.executeQuery()) {
+                    if (rs.next()) {
+                        System.out.println("Ya existe un cliente con ese documento.");
+                        return;
+                    }
+                }
+            }
+
             String sql = "INSERT INTO clientes "
                     + "(nombre, documento, correo, telefono) "
                     + "VALUES (?, ?, ?, ?)";
 
-            PreparedStatement ps =
-                    Operaciones.getConnection().prepareStatement(sql);
-
-            ps.setString(1, nombre);
-            ps.setString(2, documento);
-            ps.setString(3, correo);
-            ps.setString(4, telefono);
-
-            int filas =
-                    Operaciones.insertar_actualizar_borrar_BD(ps);
+            int filas;
+            try (PreparedStatement ps =
+                         Operaciones.getConnection().prepareStatement(sql)) {
+                ps.setString(1, nombre);
+                ps.setString(2, documento);
+                ps.setString(3, correo);
+                ps.setString(4, telefono);
+                filas = ps.executeUpdate();
+            }
 
             if (filas > 0) {
-                System.out.println("Empleado registrado.");
+                System.out.println("Cliente registrado.");
             } else {
                 System.out.println("No se pudo registrar.");
             }
 
         } catch (SQLException ex) {
-            System.out.println(ex.getMessage());
+            if (ex.getErrorCode() == 1062) {
+                System.out.println("Ya existe un cliente con ese documento.");
+            } else {
+                System.out.println(ex.getMessage());
+            }
         }
     }
         

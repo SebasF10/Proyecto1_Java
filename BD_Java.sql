@@ -9,7 +9,7 @@ CREATE TABLE empleados (
 
   id INT AUTO_INCREMENT PRIMARY KEY,
   nombre VARCHAR(80),
-  documento VARCHAR(30),
+  documento VARCHAR(30) UNIQUE,
   rol VARCHAR(30),
   correo VARCHAR(80),
   salario DECIMAL(10,2)
@@ -22,7 +22,7 @@ CREATE TABLE clientes (
 
   id INT AUTO_INCREMENT PRIMARY KEY,
   nombre VARCHAR(80),
-  documento VARCHAR(30),
+  documento VARCHAR(30) UNIQUE,
   correo VARCHAR(80),
   telefono VARCHAR(20)
 
@@ -60,4 +60,3 @@ CREATE TABLE pagos (
   FOREIGN KEY (prestamo_id) REFERENCES prestamos(id)
 
 );
-
