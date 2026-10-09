@@ -7,9 +7,12 @@ package com.mycompany.proyecto1_java.Controlador;
 import com.mycompany.proyecto1_java.Modelo.Persistencia.ConexionBD;
 import com.mycompany.proyecto1_java.Modelo.Persistencia.Operaciones;
 
+import java.math.BigDecimal;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.Scanner;
 /**
  *
@@ -185,45 +188,166 @@ public class PagoControlador {
     
     // LISTAR PAGOS
     public static void listarPagos() {
-
-        try {
-
-            Operaciones.setConnection(ConexionBD.MysConnection());
-
-            String sql = "SELECT * FROM pagos";
-
-            PreparedStatement ps =
-                    Operaciones.getConnection()
-                            .prepareStatement(sql);
-
-            ResultSet rs =
-                    Operaciones.consultar_BD(ps);
-
+        String sql = "SELECT pa.*, p.cliente_id, c.nombre AS nombre_cliente "
+                + "FROM pagos pa "
+                + "LEFT JOIN prestamos p ON pa.prestamo_id = p.id "
+                + "LEFT JOIN clientes c ON p.cliente_id = c.id "
+                + "ORDER BY pa.id";
+        try (Connection connection = ConexionBD.MysConnection()) {
+            if (connection == null) {
+                throw new SQLException("No se pudo conectar con la base de datos.");
+            }
+            try (PreparedStatement ps = connection.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
             System.out.println("------ PAGOS -------");
-
+            boolean hayPagos = false;
             while (rs.next()) {
-
+                hayPagos = true;
                 System.out.println("----------------------------");
-
                 System.out.println("ID pago: "
                         + rs.getInt("id"));
-
                 System.out.println("ID prestamo: "
                         + rs.getInt("prestamo_id"));
-
+                System.out.println("Cliente: "
+                        + rs.getString("nombre_cliente"));
                 System.out.println("Fecha: "
                         + rs.getDate("fecha_pago"));
-
                 System.out.println("Monto: $"
                         + rs.getDouble("monto"));
             }
-
+            if (!hayPagos) {
+                System.out.println("No hay pagos registrados.");
+            }
+            }
         } catch (SQLException ex) {
-
             System.out.println(ex.getMessage());
         }
     }
 
+    public static void eliminarPago(Scanner sc) {
+        System.out.print("ID del pago que desea eliminar: ");
+        if (!sc.hasNextInt()) {
+            System.out.println("El ID debe ser un numero entero.");
+            sc.next();
+            return;
+        }
+        int id = sc.nextInt();
+        if (id <= 0) {
+            System.out.println("El ID debe ser un numero positivo.");
+            return;
+        }
+
+        try (Connection connection = ConexionBD.MysConnection()) {
+            if (connection == null) {
+                throw new SQLException("No se pudo conectar con la base de datos.");
+            }
+            connection.setAutoCommit(false);
+            try {
+                int prestamoId;
+                BigDecimal montoPago;
+                String pagoSql =
+                        "SELECT prestamo_id, monto FROM pagos WHERE id = ? FOR UPDATE";
+                try (PreparedStatement ps = connection.prepareStatement(pagoSql)) {
+                    ps.setInt(1, id);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            connection.rollback();
+                            System.out.println("No existe un pago con ese ID.");
+                            return;
+                        }
+                        prestamoId = rs.getInt("prestamo_id");
+                        montoPago = rs.getBigDecimal("monto");
+                    }
+                }
+                if (montoPago == null) {
+                    throw new SQLException("El pago no tiene un monto valido.");
+                }
+
+                BigDecimal montoTotal;
+                BigDecimal saldoActual;
+                LocalDate fechaInicio;
+                LocalDate fechaVencimiento;
+                String prestamoSql =
+                        "SELECT monto_total, saldo_pendiente, fecha_inicio, "
+                        + "fecha_vencimiento FROM prestamos WHERE id = ? FOR UPDATE";
+                try (PreparedStatement ps = connection.prepareStatement(prestamoSql)) {
+                    ps.setInt(1, prestamoId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            throw new SQLException(
+                                    "No existe el prestamo asociado al pago.");
+                        }
+                        montoTotal = rs.getBigDecimal("monto_total");
+                        saldoActual = rs.getBigDecimal("saldo_pendiente");
+                        java.sql.Date inicio = rs.getDate("fecha_inicio");
+                        java.sql.Date vencimiento = rs.getDate("fecha_vencimiento");
+                        fechaInicio = inicio == null ? null : inicio.toLocalDate();
+                        fechaVencimiento = vencimiento == null
+                                ? null : vencimiento.toLocalDate();
+                    }
+                }
+                if (montoTotal == null || saldoActual == null) {
+                    throw new SQLException("El prestamo tiene un saldo no valido.");
+                }
+                if (montoPago.signum() <= 0 || montoTotal.signum() <= 0
+                        || saldoActual.signum() < 0) {
+                    throw new SQLException("El pago o el saldo del prestamo no son validos.");
+                }
+
+                BigDecimal nuevoSaldo = saldoActual.add(montoPago);
+                if (nuevoSaldo.compareTo(montoTotal) > 0) {
+                    throw new SQLException(
+                            "El saldo del prestamo es inconsistente; no se elimino el pago.");
+                }
+
+                LocalDate hoy = LocalDate.now();
+                String nuevoEstado;
+                if (nuevoSaldo.signum() == 0) {
+                    nuevoEstado = "PAGADO";
+                } else if (fechaInicio != null && hoy.isBefore(fechaInicio)) {
+                    nuevoEstado = "PENDIENTE";
+                } else if (fechaVencimiento != null
+                        && hoy.isAfter(fechaVencimiento)) {
+                    nuevoEstado = "VENCIDO";
+                } else {
+                    nuevoEstado = "ACTIVO";
+                }
+
+                String actualizarSql =
+                        "UPDATE prestamos SET saldo_pendiente = ?, estado = ? WHERE id = ?";
+                try (PreparedStatement ps =
+                             connection.prepareStatement(actualizarSql)) {
+                    ps.setBigDecimal(1, nuevoSaldo);
+                    ps.setString(2, nuevoEstado);
+                    ps.setInt(3, prestamoId);
+                    if (ps.executeUpdate() != 1) {
+                        throw new SQLException("No se pudo actualizar el saldo del prestamo.");
+                    }
+                }
+
+                try (PreparedStatement ps =
+                             connection.prepareStatement("DELETE FROM pagos WHERE id = ?")) {
+                    ps.setInt(1, id);
+                    if (ps.executeUpdate() != 1) {
+                        throw new SQLException("No se pudo eliminar el pago.");
+                    }
+                }
+
+                connection.commit();
+                System.out.println("Pago eliminado y saldo del prestamo actualizado.");
+                System.out.println("Nuevo saldo pendiente: $" + nuevoSaldo);
+            } catch (SQLException ex) {
+                try {
+                    connection.rollback();
+                } catch (SQLException rollbackEx) {
+                    ex.addSuppressed(rollbackEx);
+                }
+                throw ex;
+            }
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
 
     // BUSCAR PAGO
     public static void buscarPago(Scanner sc) {

@@ -22,6 +22,7 @@ public class MenuPago {
             System.out.println("3. Buscar pago");
             System.out.println("4. Ver historial de pagos");
             System.out.println("5. Consultar saldo pendiente");
+            System.out.println("6. Eliminar pago");
             System.out.println("0. Volver");
             System.out.print("Seleccione una opcion: ");
             System.out.println("---------------------------------");
@@ -51,6 +52,10 @@ public class MenuPago {
 
                 case 5:
                     PagoControlador.consultarSaldoPendiente(sc);
+                    break;
+
+                case 6:
+                    PagoControlador.eliminarPago(sc);
                     break;
 
                 case 0:

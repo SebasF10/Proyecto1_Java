@@ -7,6 +7,7 @@ package com.mycompany.proyecto1_java.Controlador;
 import com.mycompany.proyecto1_java.Modelo.Persistencia.ConexionBD;
 import com.mycompany.proyecto1_java.Modelo.Persistencia.Operaciones;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -164,65 +165,92 @@ public class PrestamoControlador {
     
     // LISTAR PRESTAMOS
     public static void listarPrestamos() {
-
-        try {
-
-            Operaciones.setConnection(ConexionBD.MysConnection());
+        String sql = "SELECT p.*, c.nombre AS nombre_cliente, "
+                + "e.nombre AS nombre_empleado "
+                + "FROM prestamos p "
+                + "LEFT JOIN clientes c ON p.cliente_id = c.id "
+                + "LEFT JOIN empleados e ON p.empleado_id = e.id "
+                + "ORDER BY p.id";
+        try (Connection connection = ConexionBD.MysConnection()) {
+            if (connection == null) {
+                throw new SQLException("No se pudo conectar con la base de datos.");
+            }
+            Operaciones.setConnection(connection);
             sincronizarPrestamosVencidos();
-
-            String sql = "SELECT * FROM prestamos";
-
-            PreparedStatement ps =
-                    Operaciones.getConnection().prepareStatement(sql);
-
-            ResultSet rs =
-                    Operaciones.consultar_BD(ps);
-
+            try (PreparedStatement ps = connection.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
             System.out.println("--------- PRESTAMOS ----------");
-
+            boolean hayPrestamos = false;
             while (rs.next()) {
-
+                hayPrestamos = true;
                 System.out.println("----------------------------");
-
                 System.out.println("ID: "
                         + rs.getInt("id"));
-
-                System.out.println("Cliente ID: "
-                        + rs.getInt("cliente_id"));
-
-                System.out.println("Empleado ID: "
-                        + rs.getInt("empleado_id"));
-
+                System.out.println("Cliente: " + rs.getString("nombre_cliente")
+                        + " (ID " + rs.getInt("cliente_id") + ")");
+                System.out.println("Empleado: " + rs.getString("nombre_empleado")
+                        + " (ID " + rs.getInt("empleado_id") + ")");
                 System.out.println("Monto: $"
                         + rs.getDouble("monto"));
-
                 System.out.println("Interes: "
                         + rs.getDouble("interes") + "%");
-
                 System.out.println("Cuotas: "
                         + rs.getInt("cuotas"));
-
                 System.out.println("Fecha inicio: "
                         + rs.getDate("fecha_inicio"));
-
                 System.out.println("Fecha vencimiento: "
                         + rs.getDate("fecha_vencimiento"));
-
                 System.out.println("Monto total: $"
                         + rs.getDouble("monto_total"));
-
                 System.out.println("Valor cuota: $"
                         + rs.getDouble("valor_cuota"));
-
                 System.out.println("Saldo pendiente: $"
                         + rs.getDouble("saldo_pendiente"));
-
                 System.out.println("Estado: "
                         + rs.getString("estado"));
             }
-
+            if (!hayPrestamos) {
+                System.out.println("No hay prestamos registrados.");
+            }
+            }
         } catch (SQLException ex) {
             System.out.println(ex.getMessage());
+        }
+    }
+
+    public static void eliminarPrestamo(Scanner sc) {
+        System.out.print("ID del prestamo que desea eliminar: ");
+        if (!sc.hasNextInt()) {
+            System.out.println("El ID debe ser un numero entero.");
+            sc.next();
+            return;
+        }
+        int id = sc.nextInt();
+        if (id <= 0) {
+            System.out.println("El ID debe ser un numero positivo.");
+            return;
+        }
+
+        String sql = "DELETE FROM prestamos WHERE id = ?";
+        try (Connection connection = ConexionBD.MysConnection()) {
+            if (connection == null) {
+                throw new SQLException("No se pudo conectar con la base de datos.");
+            }
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.setInt(1, id);
+                int filas = ps.executeUpdate();
+                if (filas == 0) {
+                    System.out.println("No existe un prestamo con ese ID.");
+                } else {
+                    System.out.println("Prestamo eliminado correctamente.");
+                }
+            }
+        } catch (SQLException ex) {
+            if (ex.getErrorCode() == 1451) {
+                System.out.println("No se puede eliminar el prestamo porque tiene pagos asociados. Elimine primero sus pagos.");
+            } else {
+                System.out.println(ex.getMessage());
+            }
         }
     }
     

@@ -7,6 +7,7 @@ package com.mycompany.proyecto1_java.Controlador;
 import com.mycompany.proyecto1_java.Modelo.Persistencia.ConexionBD;
 import com.mycompany.proyecto1_java.Modelo.Persistencia.Operaciones;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -106,25 +107,17 @@ public class EmpleadoControlador {
 
     // LISTAR
     public static void listarEmpleados() {
-
-        try {
-
-            Operaciones.setConnection(
-                    ConexionBD.MysConnection()
-            );
-
-            String sql = "SELECT * FROM empleados";
-
-            PreparedStatement ps =
-                    Operaciones.getConnection().prepareStatement(sql);
-
-            ResultSet rs =
-                    Operaciones.consultar_BD(ps);
-
+        String sql = "SELECT * FROM empleados ORDER BY id";
+        try (Connection connection = ConexionBD.MysConnection()) {
+            if (connection == null) {
+                throw new SQLException("No se pudo conectar con la base de datos.");
+            }
+            try (PreparedStatement ps = connection.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
             System.out.println("---- EMPLEADOS ------");
-
+            boolean hayEmpleados = false;
             while (rs.next()) {
-
+                hayEmpleados = true;
                 System.out.println("------------------");
                 System.out.println("ID: " + rs.getInt("id"));
                 System.out.println("Nombre: " + rs.getString("nombre"));
@@ -133,9 +126,48 @@ public class EmpleadoControlador {
                 System.out.println("Correo: " + rs.getString("correo"));
                 System.out.println("Salario: " + rs.getDouble("salario"));
             }
-
+            if (!hayEmpleados) {
+                System.out.println("No hay empleados registrados.");
+            }
+            }
         } catch (SQLException ex) {
             System.out.println(ex.getMessage());
+        }
+    }
+
+    public static void eliminarEmpleado(Scanner sc) {
+        System.out.print("ID del empleado que desea eliminar: ");
+        if (!sc.hasNextInt()) {
+            System.out.println("El ID debe ser un numero entero.");
+            sc.next();
+            return;
+        }
+        int id = sc.nextInt();
+        if (id <= 0) {
+            System.out.println("El ID debe ser un numero positivo.");
+            return;
+        }
+
+        String sql = "DELETE FROM empleados WHERE id = ?";
+        try (Connection connection = ConexionBD.MysConnection()) {
+            if (connection == null) {
+                throw new SQLException("No se pudo conectar con la base de datos.");
+            }
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.setInt(1, id);
+                int filas = ps.executeUpdate();
+                if (filas == 0) {
+                    System.out.println("No existe un empleado con ese ID.");
+                } else {
+                    System.out.println("Empleado eliminado correctamente.");
+                }
+            }
+        } catch (SQLException ex) {
+            if (ex.getErrorCode() == 1451) {
+                System.out.println("No se puede eliminar el empleado porque tiene prestamos asociados.");
+            } else {
+                System.out.println(ex.getMessage());
+            }
         }
     }
 

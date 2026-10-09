@@ -20,6 +20,7 @@ public class MenuEmpleado {
             System.out.println("1. Registrar empleado");
             System.out.println("2. Listar empleados");
             System.out.println("3. Buscar empleado");
+            System.out.println("4. Eliminar empleado");
             System.out.println("0. Volver");
             System.out.print("Seleccione: ");
 
@@ -42,6 +43,10 @@ public class MenuEmpleado {
 
                 case 3:
                     EmpleadoControlador.buscarEmpleado(sc);
+                    break;
+
+                case 4:
+                    EmpleadoControlador.eliminarEmpleado(sc);
                     break;
 
                 case 0:

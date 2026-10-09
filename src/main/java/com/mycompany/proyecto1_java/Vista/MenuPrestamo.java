@@ -28,6 +28,7 @@ public class MenuPrestamo {
             System.out.println("5. Cambiar estado");
             System.out.println("6. Consultar prestamos activos");
             System.out.println("7. Consultar prestamos vencidos");
+            System.out.println("8. Eliminar prestamo");
             System.out.println("0. Volver");
             System.out.print("Seleccione una opcion: ");
 
@@ -65,6 +66,10 @@ public class MenuPrestamo {
 
                 case 7:
                     PrestamoControlador.consultarPrestamosVencidos();
+                    break;
+
+                case 8:
+                    PrestamoControlador.eliminarPrestamo(sc);
                     break;
 
                 case 0:
